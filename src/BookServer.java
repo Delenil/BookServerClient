@@ -123,16 +123,13 @@ public class BookServer {
     public void start() {
         while (true) {
             try {
-                System.out.println("Waiting for client connection...");
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Client connected: " + clientSocket.getInetAddress());
-                handleClient(clientSocket);
+                new Thread(() -> handleClient(clientSocket)).start();
             } catch (IOException e) {
                 System.err.println("Error accepting client connection: " + e.getMessage());
             }
         }
     }
-
     public static void main(String[] args) {
         BookServer server = new BookServer(12345);
         server.start();
