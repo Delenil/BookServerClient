@@ -18,11 +18,11 @@ public class BookClient {
                 break;
             }
 
-            String[] parts = input.split("\\s+", 2); // Split into command and username
+            String[] parts = input.split("\\s+", 2);
             String command = parts[0].toUpperCase();
 
             if (command.equals("GET")) {
-                // Handle GET command
+
                 try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
                      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                      PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
@@ -35,7 +35,7 @@ public class BookClient {
                 }
 
             } else if (command.equals("ADD")) {
-                // Handle ADD command
+
                 if (parts.length < 2) {
                     System.out.println("Invalid ADD command. Usage: ADD <username>");
                     continue;
@@ -46,7 +46,7 @@ public class BookClient {
                      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                      PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
-                    // Send "ADD <username>" in one line
+
                     out.println("ADD " + username);
                     handleAddRequest(in, out, scanner);
 
@@ -64,6 +64,7 @@ public class BookClient {
 
     private static void handleGetResponse(BufferedReader in) throws IOException {
         String response = in.readLine();
+        System.out.println("Server response: " + response);
         if (response.equals("OK")) {
             String title = in.readLine();
             System.out.println("Received book title: " + title);
@@ -73,25 +74,28 @@ public class BookClient {
     }
 
     private static void handleAddRequest(BufferedReader in, PrintWriter out, Scanner scanner) throws IOException {
-        String response = in.readLine(); // Read server's "OK" or "NOTOK"
+        String response = in.readLine();
+        System.out.println("Server response: " + response);
         if (response.equals("NOTOK")) {
             System.out.println("Error: You are not authorized to add titles.");
             System.exit(1);
             return;
         }
 
-        // If authorized, send titles
+
         System.out.println("Enter book titles to add (one per line, blank line to finish):");
         while (true) {
             String title = scanner.nextLine().trim();
             if (title.isEmpty()) {
-                out.println(); // Send blank line to end titles
+                out.println();
                 break;
             }
-            out.println(title); // Send title
+            if (!title.isBlank()) {
+                out.println(title);
+            }
         }
 
-        // Read final response from server
+
         response = in.readLine();
         if (response.equals("OK")) {
             System.out.println("Titles added successfully.");

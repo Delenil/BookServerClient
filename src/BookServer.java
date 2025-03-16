@@ -92,29 +92,32 @@ public class BookServer {
     private void handleAddRequest(BufferedReader in, PrintWriter out, String request) throws IOException {
         String[] parts = request.split(" ");
         if (parts.length < 2) {
-            out.println("NOTOK"); // Invalid command (no username)
+            out.println("NOTOK");
 
             return;
         }
 
         String username = parts[1];
         if (!isAuthorized(username)) {
-            out.println("NOTOK"); // User not authorized
+            System.out.println("Authorization failed for user: " + username);
+            out.println("NOTOK");
             return;
         }
 
-        out.println("OK"); // Authorization successful
+        out.println("OK");
 
-        // Read titles until blank line
-        String title;
-        while ((title = in.readLine()) != null && !title.isEmpty()) {
-            bookTitles.add(title);
-            System.out.println("Added title: " + title);
+        try {
+            String title;
+            while ((title = in.readLine()) != null && !title.isEmpty()) {
+                bookTitles.add(title);
+                System.out.println("Added title: " + title);
+            }
+            out.println("OK");
+        } catch (IOException e) {
+            System.err.println("Error reading titles: " + e.getMessage());
+            out.println("ERR");
         }
-
-        out.println("OK"); // Confirm titles added
     }
-
     private boolean isAuthorized(String username) {
         return authorizedUsers.contains(username);
     }
