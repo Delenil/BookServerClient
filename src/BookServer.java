@@ -116,7 +116,6 @@ public class BookServer {
     }
 
     private boolean isAuthorized(String username) {
-        List<String> authorizedUsers = List.of("alice", "bob"); // Case-sensitive check
         return authorizedUsers.contains(username);
     }
 
