@@ -10,31 +10,52 @@ public class BookClient {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
-            System.out.println("Enter a command (GET, ADD, or EXIT):");
-            String command = scanner.nextLine().trim().toUpperCase();
+            System.out.println("Enter a command (GET, ADD <username>, or EXIT):");
+            String input = scanner.nextLine().trim();
 
-            if (command.equals("EXIT")) {
+            if (input.equalsIgnoreCase("EXIT")) {
                 System.out.println("Exiting client.");
                 break;
             }
 
-            if (command.equals("GET") || command.startsWith("ADD")) {
+            String[] parts = input.split("\\s+", 2); // Split into command and username
+            String command = parts[0].toUpperCase();
+
+            if (command.equals("GET")) {
+                // Handle GET command
                 try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
                      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                      PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
-                    // Send command to server
-                    if (command.equals("GET")) {
-                        out.println("GET");
-                        handleGetResponse(in);
-                    } else if (command.startsWith("ADD")) {
-                        handleAddRequest(scanner, in, out);
-                    }
+                    out.println("GET");
+                    handleGetResponse(in);
+
                 } catch (IOException e) {
                     System.err.println("Error communicating with server: " + e.getMessage());
                 }
+
+            } else if (command.equals("ADD")) {
+                // Handle ADD command
+                if (parts.length < 2) {
+                    System.out.println("Invalid ADD command. Usage: ADD <username>");
+                    continue;
+                }
+
+                String username = parts[1]; // Extract username from the input
+                try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                     PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+
+                    // Send "ADD <username>" in one line
+                    out.println("ADD " + username);
+                    handleAddRequest(in, out, scanner);
+
+                } catch (IOException e) {
+                    System.err.println("Error communicating with server: " + e.getMessage());
+                }
+
             } else {
-                System.out.println("Invalid command. Please enter GET, ADD, or EXIT.");
+                System.out.println("Invalid command. Please enter GET, ADD <username>, or EXIT.");
             }
         }
 
@@ -51,27 +72,26 @@ public class BookClient {
         }
     }
 
-    private static void handleAddRequest(Scanner scanner, BufferedReader in, PrintWriter out) throws IOException {
-        System.out.println("Enter username:");
-        String username = scanner.nextLine().trim();
-        out.println("ADD " + username);
-
-        String response = in.readLine();
+    private static void handleAddRequest(BufferedReader in, PrintWriter out, Scanner scanner) throws IOException {
+        String response = in.readLine(); // Read server's "OK" or "NOTOK"
         if (response.equals("NOTOK")) {
             System.out.println("Error: You are not authorized to add titles.");
+            System.exit(1);
             return;
         }
 
+        // If authorized, send titles
         System.out.println("Enter book titles to add (one per line, blank line to finish):");
         while (true) {
             String title = scanner.nextLine().trim();
             if (title.isEmpty()) {
-                out.println();
+                out.println(); // Send blank line to end titles
                 break;
             }
-            out.println(title);
+            out.println(title); // Send title
         }
 
+        // Read final response from server
         response = in.readLine();
         if (response.equals("OK")) {
             System.out.println("Titles added successfully.");

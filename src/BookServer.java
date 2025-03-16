@@ -7,11 +7,14 @@ import java.util.Random;
 
 public class BookServer {
     private List<String> bookTitles;
+    private List<String> authorizedUsers;
     private ServerSocket serverSocket;
 
     public BookServer(int port) {
         bookTitles = new ArrayList<>();
+        authorizedUsers = new ArrayList<>();
         loadBooksFromFile("books.txt");
+        loadAuthorizedUsers("users.txt");
 
         try {
             serverSocket = new ServerSocket(port);
@@ -31,6 +34,19 @@ public class BookServer {
             System.out.println("Loaded " + bookTitles.size() + " book titles.");
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
+        }
+    }
+
+    private void loadAuthorizedUsers(String filename) {
+        authorizedUsers = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                authorizedUsers.add(line.trim());
+            }
+            System.out.println("Loaded " + authorizedUsers.size() + " authorized users.");
+        } catch (IOException e) {
+            System.err.println("Error reading authorized users file: " + e.getMessage());
         }
     }
 
@@ -76,29 +92,31 @@ public class BookServer {
     private void handleAddRequest(BufferedReader in, PrintWriter out, String request) throws IOException {
         String[] parts = request.split(" ");
         if (parts.length < 2) {
-            out.println("NOTOK");
+            out.println("NOTOK"); // Invalid command (no username)
+
             return;
         }
 
         String username = parts[1];
         if (!isAuthorized(username)) {
-            out.println("NOTOK");
+            out.println("NOTOK"); // User not authorized
             return;
         }
 
-        out.println("OK");
+        out.println("OK"); // Authorization successful
 
+        // Read titles until blank line
         String title;
         while ((title = in.readLine()) != null && !title.isEmpty()) {
             bookTitles.add(title);
             System.out.println("Added title: " + title);
         }
 
-        out.println("OK");
+        out.println("OK"); // Confirm titles added
     }
 
     private boolean isAuthorized(String username) {
-        List<String> authorizedUsers = List.of("alice", "bob");
+        List<String> authorizedUsers = List.of("alice", "bob"); // Case-sensitive check
         return authorizedUsers.contains(username);
     }
 
