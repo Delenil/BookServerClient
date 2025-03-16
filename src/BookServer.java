@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class BookServer {
     private List<String> bookTitles; //List to store book title
-    private ServerSocket serverSocket;
+    private ServerSocket serverSocket; //Socket listening for client connection
 
 
     //Modified BookServer method
@@ -20,6 +20,7 @@ public class BookServer {
             System.out.println("Server started on port " + port);
         } catch (IOException e) {
             System.err.println("Could not start server: " + e.getMessage());
+            System.exit(1); //If server is unable to start
         }
     }
 
@@ -116,13 +117,14 @@ public class BookServer {
         return authorizedUsers.contains(username);
     }
 
-    //Acceptance of connection and handling of the request
+    //Acceptance of connection and handling of the request - updated to persistent state
     public void start() {
         while (true) {
             try {
-                Socket clientSocket = serverSocket.accept();
+                System.out.println("Waiting for client connection...");
+                Socket clientSocket = serverSocket.accept(); // Accept a client connection
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
-                handleClient(clientSocket);
+                handleClient(clientSocket); // Handle the client's request
             } catch (IOException e) {
                 System.err.println("Error accepting client connection: " + e.getMessage());
             }
@@ -130,6 +132,7 @@ public class BookServer {
     }
 
     public static void main(String[] args) {
-        BookServer server = new BookServer(12345); //port 12345
+        BookServer server = new BookServer(12345);
+        server.start();
     }
 }
